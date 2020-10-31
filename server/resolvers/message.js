@@ -1,43 +1,28 @@
-const { v4: uuidv4 } = require('uuid')
-
 const messageResolvers = {
     Query: {
-        message: (parent, { id }, { models }) => {
-            return models.messages[id]
+        message: async (parent, { id }, { models }) => {
+            return await models.Message.findOne({ where: { id } })
         },
-        messages: (parent, args, { models }) => {
-            return Object.values(models.messages)
+        messages: async (parent, args, { models }) => {
+            return await models.Message.findAll()
         }
     },
 
     Mutation: {
-        createMessage: (parent, { text }, { me, models }) => {
-            const id = uuidv4()
-
-            const message = {
-                id,
+        createMessage: async (parent, { text }, { me, models }) => {
+            return await models.Message.create({ 
                 text,
                 userId: me.id,
-            }
-
-            models.messages[id] = message
-
-            return message
+            })
         },
-        deleteMessage: (parent, { id }, { models }) => {
-            const { [id]: message, ...otherMessages } = models.messages
-
-            if (!message) return false
-
-            models.messages = otherMessages
-
-            return true
+        deleteMessage: async (parent, { id }, { models }) => {
+            return await models.Message.destroy({ where: { id } })
         },
     },
 
     Message: {
-        user: (message, args, { models }) => {
-            return models.users[message.userId]
+        user: async (message, args, { models }) => {
+            return await models.User.findOne({ where: { id: message.userId } })
         },
     },
 }

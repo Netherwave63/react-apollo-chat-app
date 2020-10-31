@@ -1,51 +1,32 @@
-const { v4: uuidv4 } = require('uuid')
-
 const userResolvers = {
     Query: {
         me: (parent, args, { me }) => {
             return me
         },
-        user: (parent, { id }, { models }) => {
-            return models.users[id]
+        user: async (parent, { id }, { models }) => {
+            return await models.User.findOne({ where: { id } })
         },
-        users: (parent, args, { models }) => {
-            return Object.values(models.users)
+        users: async (parent, args, { models }) => {
+            return await models.User.findAll()
         },
     },
 
     Mutation: {
-        createUser: (parent, { username }, { models }) => {
-            const id = uuidv4()
-
-            const user = {
-                id,
-                username,
-            }
-
-            models.users[id] = user
-
-            return user
+        createUser: async (parent, { username }, { models }) => {
+            return await models.User.create({ username })
         },
-        deleteUser: (parent, { id }, { models }) => {
-            const { [id]: user, ...otherUsers } = models.users
-
-            if (!user) return false
-
-            models.users = otherUsers
-            models.messages = Object.values(models.messages).filter(message => {
-                return message.userId !== id
-            }).reduce((obj, message) => ({
-                ...obj,
-                [message.id]: message
-            }), {})
-
-            return true
+        deleteUser: async (parent, { id }, { models }) => {
+            return await models.User.destroy({ where: { id } })
         },
     },
 
     User: {
-        messages: (user, args, { models }) => {
-            return Object.values(models.messages).filter(message => message.userId === user.id)
+        messages: async (user, args, { models }) => {
+            return await models.Message.findAll({
+                where: {
+                    userId: user.id
+                }
+            }) 
         }
     },
 }
